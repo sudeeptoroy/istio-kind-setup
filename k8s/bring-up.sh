@@ -104,3 +104,32 @@ kubectl --context kind-c2 create ns nginx
 kubectl --context kind-c1 label namespace busybox istio-injection=enabled
 kubectl --context kind-c1 label namespace nginx istio-injection=enabled
 kubectl --context kind-c2 label namespace nginx istio-injection=enabled
+
+
+
+#####################################
+
+# two TD
+
+
+kubectl --context="${CTX_CLUSTER1}" delete secret cacerts -n istio-system
+kubectl --context="${CTX_CLUSTER2}" delete secret cacerts -n istio-system
+
+kubectl --context="${CTX_CLUSTER1}" create secret generic cacerts -n istio-system \
+      --from-file=kind-c1/ca-cert.pem \
+      --from-file=kind-c1/ca-key.pem \
+      --from-file=kind-c1/root-cert.pem \
+      --from-file=kind-c1/cert-chain.pem
+
+kubectl --context="${CTX_CLUSTER2}" create secret generic cacerts -n istio-system \
+      --from-file=kind-c2/ca-cert.pem \
+      --from-file=kind-c2/ca-key.pem \
+      --from-file=kind-c2/root-cert.pem \
+      --from-file=kind-c2/cert-chain.pem
+
+
+istioctl install -f istio-c1-two-td.yaml --context "${CTX_CLUSTER1}"
+istioctl install -f istio-c2-two-td.yaml --context "${CTX_CLUSTER2}"
+
+
+

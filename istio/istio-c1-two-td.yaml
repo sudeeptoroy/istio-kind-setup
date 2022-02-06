@@ -1,0 +1,78 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  meshConfig:
+    defaultConfig: 
+      proxyMetadata: 
+        PROXY_CONFIG_XDS_AGENT: "true" 
+    caCertificates:
+    - pem: |
+        -----BEGIN CERTIFICATE-----
+        MIIFCTCCAvGgAwIBAgIJAK+Ykt2E5+fNMA0GCSqGSIb3DQEBBQUAMCIxDjAMBgNV
+        BAoMBUlzdGlvMRAwDgYDVQQDDAdSb290IENBMB4XDTIyMDIwNjE3MTIzMloXDTMy
+        MDIwNDE3MTIzMlowIjEOMAwGA1UECgwFSXN0aW8xEDAOBgNVBAMMB1Jvb3QgQ0Ew
+        ggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQDOQmcdEsDPN5se43NMKS1j
+        QlBsPzI1ZiK17q9PXGUUzcpEbWndho8R6s35G3scEtNDJr4GjBA8EkB+PrtsCXqY
+        Uy8FvK31mHZrjK/8xYCoy08zI52KgqTkxu+sKsRSAYC1iZM8SyxqVXgtFJPrCa6j
+        KjlXntCvnx2qaXaeMkswykLAulQbhFrPJYA9GUPZGXXoIdNeUVeAdiBp/u4xreRF
+        +T1Xj0xN96+YJwpZ6l5PsPsVW+WTeFTzsMCQ/CaegtStOako4DaOGrlsHdkzsORG
+        Hey3dyvSwIbZ//F7sAfZ2YHqAbiUaQ0p1R1qtY/rg7RNp3clr2+YggGYoInJfmGL
+        iCcUCzZYhBcDk0fR6kRX5kjvzIrHrylMs4qa0GvskJ5txvk3XHrYbK8bA19NRGsx
+        pqdzX6BxYF7U5sUj+w5kcENG+MlwFVWPfrwHJsMErU6MOd9po6mR5b+FEcBLmuLp
+        iFe0rkVdPOEYM2+8MOWN70l2yLFIEqNGhMEC2R/XE5tVdNFkhVpKXg+6UiFY8LOJ
+        3BqU/bhhi13oN6HxbhVrX8vq6Odp2Ix/cXOXtXdFnKz/XyFIPQxpRs7Et+EcHzJ3
+        oNb9hfmlCPt3pg8/UIDjwkZqNZ9VHTdgk1Zs90PF5wl7uzQ5T9btlZ0hdUXFD4kN
+        JATlrnOeTOYkyBPlQMQzMQIDAQABo0IwQDAdBgNVHQ4EFgQU7KRK/4EJCUXeqTMr
+        vX14V2tXnWAwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMCAuQwDQYJKoZI
+        hvcNAQEFBQADggIBAJI7eGUrvBWqEwaDqLIxv4sBYDxweNSyLSl+tE0x9/Qivnvf
+        pO+DGwPsvv17nbrD5nEjmqz0H5no35UpL//KlJiZnTPx3BUqbZulRZv94ouVghJ3
+        vookcfVSN8powfLTM23tTBhDez9CplzkpfQCTiDr10BpUOMqbPoF18iMsysgfEyz
+        TJpc3dUffKIKKiH+hpnpf/mLyQXRmwD8EEaC7S9P89bzUFeOwnMWroABdWOGyT+l
+        bKzCvKpnvmHUi8PLn8QVLbEi9iNzJOF/43Yhl9+gpJD1yc+BL/bS3+UOOta+GTC8
+        AymbXHDMt7t6OaPPQiDe4id/e19WoW5fWZZDHk5HzoiauEwxWo04i3BZsMCSJmQo
+        BPjVYlhMJZg9Ju+hDIwUztVqNcKv/qyNls+VAaiVx0F59eHUYv9EXUll7v8PpBiB
+        X56JHeFqX5PpPpEA7K1uI7bFG6jEHCa2o+/fdE7p67N6tdv8AepWSSOa8Zsxw79g
+        faQAhRWgc4O8evwaZzmoDVsHcm2QveAuyez7Z+LT+euJjHMQt9wX+GyHl9RsDM3w
+        Y1mMXoYFgii5sYaxLyEdW7fDF/EPc6HzBIcyM+lSJ0vUBz1rejDwO7m8Bjy1aioc
+        YghA57wT5z9bTkMxj2DiMghLcrPHUl9Xiy0HYf9jXs3bKBUHsZaUzK5yM9x/
+        -----END CERTIFICATE-----
+  values:
+    pilot: 
+      env: 
+        ISTIO_MULTIROOT_MESH: true
+    gateways:
+      istio-ingressgateway:
+        injectionTemplate: gateway
+    global:
+      meshID: mesh1
+      multiCluster:
+        clusterName: kind-c1
+      network: network1
+  components:
+    ingressGateways:
+      - name: istio-eastwestgateway
+        label:
+          istio: eastwestgateway
+          app: istio-eastwestgateway
+          topology.istio.io/network: network1
+        enabled: true
+        k8s:
+          env:
+            - name: ISTIO_META_ROUTER_MODE
+              value: "sni-dnat"
+            - name: ISTIO_META_REQUESTED_NETWORK_VIEW
+              value: network1
+          service:
+            ports:
+              - name: status-port
+                port: 15021
+                targetPort: 15021
+              - name: tls
+                port: 15443
+                targetPort: 15443
+              - name: tls-istiod
+                port: 15012
+                targetPort: 15012
+              - name: tls-webhook
+                port: 15017
+                targetPort: 15017
